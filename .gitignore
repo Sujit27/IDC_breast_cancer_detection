@@ -1,3 +1,5 @@
 dataset
-
+__pycache__
 *.zip
+*.pyc
+saved_model*
