@@ -25,7 +25,7 @@ def main():
     device = torch.device("cuda:0" if use_cuda else "cpu")
     
     # create dataset
-    transform = transforms.Compose([transforms.RandomAffine((-90,90)),transforms.ToTensor()])
+    transform = transforms.Compose([transforms.Resize((50,50)),transforms.RandomAffine((-90,90)),transforms.ToTensor()])
     dataset = CancerDataset(transform=transform)
     
     # create network
@@ -67,15 +67,17 @@ def main():
             
             images = images.to(device)
             labels = labels.to(device)
+            labels = labels.float()
             
             optimizer.zero_grad()
             outputs = net(images)
+            outputs = outputs.squeeze(1)
 
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             
-            if i%opt.display==display-1:
+            if i%opt.display==opt.display-1:
                 disp_and_evaluate('train',epoch,i,outputs,labels,loss)               
         
         net.eval()
@@ -84,11 +86,14 @@ def main():
             
             images = images.to(device)
             labels = labels.to(device)
+            labels = labels.float()
+            
             
             outputs = net(images)
+            outputs = outputs.squeeze(1)
             loss = criterion(outputs, labels)
             
-            if i%opt.display==display-1:
+            if i%opt.display==opt.display-1:
                 disp_and_evaluate('train',epoch,i,outputs,labels,loss) 
                 
     torch.save(net.state_dict(), os.path.join("saved_model","breast_cancer_detector.pth"))
@@ -102,8 +107,8 @@ def disp_and_evaluate(phase,epoch,i,outputs,labels,loss):
     labels = labels.detach().cpu().tolist()
     outputs = outputs.detach().cpu().tolist()
     outputs = [1 if output>0.5 else 0 for output in outputs]
-    f1_score = f1_score(labels,outputs)
-    print("F1 score: {}".format(f1_score))      
+    F1_score = f1_score(labels,outputs)
+    print("F1 score: {}".format(F1_score))      
 
 if __name__ == "__main__":
     main()
